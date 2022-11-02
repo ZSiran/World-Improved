@@ -1,0 +1,105 @@
+---
+title: "Workspace"
+author: "Zoe Webb"
+date: "2022-11-01"
+output: html_document
+---
+##Basic Setup
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+```{r Packages}
+#install packages
+install.packages(
+  c("tidyverse", 
+    "tidyselect", 
+    "cowplot", 
+    "googleway", 
+    "ggplot2", 
+    "ggrepel", 
+    "ggspatial", 
+    "lwgeom", 
+    "sf", 
+    "rnaturalearth",
+    "rnaturalearthdata", 
+    "ggthemes", 
+    "jpeg", 
+    "png")
+  )
+
+#load packages
+library(tidyverse)
+library(tidyselect)
+library(cowplot)
+library(googleway)
+library(ggplot2)
+library(ggrepel)
+library(ggspatial)
+library(lwgeom)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggthemes)
+library(jpeg)
+library(png)
+
+#create primary dataset
+world <- ne_countries(scale = "medium", 
+                      returnclass = "sf")
+class(world)
+```
+```{r Snip dataset}
+world_small <- world %>%
+  select(sovereignt, type, admin, name, name_long, formal_en, postal)
+```
+```{r Test map}
+world_small %>%
+  ggplot() +
+  geom_sf()
+```
+
+**Variables to change/make**
+name_long -> name_formal
+name -> name (Standardized name)
+name_alt -> Alternative name
+un_name + UN recognized name
+un_recognized = Boolean value of UN recognition
+type -> type (UN recognition + Dependency status)
+world_bank, european_union, NATO, etc = Boolean value of membership of various organizations
+
+I'm going to use the postal code to standardize my joins
+
+**How to export data**
+This can then be imported into excel or google sheets
+```{r Remove Geom}
+world_no_geom <- dplyr::select(as.data.frame(world), -geometry)
+```
+```{r Export dataset}
+write.table(world_improved, file = "world_improved0.1.txt", append = TRUE, quote = TRUE, sep = ",",
+            eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+```
+
+```{r N/A to *n/a*}
+world_zoe <- World_Zoe %>%
+  mutate(
+    across(
+      everything(), ~replace(., . %in% c("N.A.", "NA", "N/A", ""), NA)))
+```
+
+```{r Joining sets}
+world_new <- world_small %>%
+  left_join(world_zoe, 
+            world_small, 
+            by = "postal")
+```
+
+```{r Remove old data}
+world_improved <- world
+```
+
+```{r Check column types}
+str(world)
+```
